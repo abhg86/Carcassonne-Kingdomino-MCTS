@@ -1,6 +1,6 @@
 
 # carcassonne
-Carcassonne implementation in python
+Carcassonne implementation in python by wingedsheep (see https://github.com/wingedsheep/carcassonne/)
 
 ![Example game](https://github.com/wingedsheep/carcassonne/blob/master/example_game.gif)
 
@@ -49,3 +49,4 @@ Code example for a game with two players
 	    if action is not None:  
 	        game.step(player, action)  
 	    game.render() 
+# MCTS
