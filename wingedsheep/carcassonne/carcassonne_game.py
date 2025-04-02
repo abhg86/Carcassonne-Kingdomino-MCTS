@@ -40,3 +40,6 @@ class CarcassonneGame:
 
     def get_possible_actions(self) -> [Action]:
         return ActionUtil.get_possible_actions(self.state)
+    
+    def set_state(self, state:CarcassonneGameState):
+        self.state = state
