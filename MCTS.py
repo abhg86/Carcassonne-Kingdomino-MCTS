@@ -19,13 +19,13 @@ class TranspositionTable():
         self.Table = {}
         self.MaxLegalMoves = MaxLegalMoves
 
-    def add(self,board,placed_meeples):
+    def add(self,board,placed_meeples, next_tile):
         nplayouts = [0.0 for x in range (self.MaxLegalMoves)]
         nwins = [0.0 for x in range (self.MaxLegalMoves)]
-        self.Table[(str(board),str(placed_meeples))] = [0, nplayouts, nwins]
+        self.Table[(str(board),str(placed_meeples), hash(next_tile))] = [0, nplayouts, nwins]
 
-    def look (self,board, placed_meeples):
-        return self.Table.get((str(board),str(placed_meeples)), None)
+    def look (self,board, placed_meeples, next_tile):
+        return self.Table.get((str(board),str(placed_meeples),hash(next_tile)), None)
 
 
 class UCT():
@@ -47,7 +47,7 @@ class UCT():
     def expand(self,state:CarcassonneGameState):
         if state.is_terminated():
             return state.scores
-        t = self.table.look(state.board, state.placed_meeples)
+        t = self.table.look(state.board, state.placed_meeples, state.next_tile)
         if t != None:
             bestValue = 0
             best = 0
@@ -72,14 +72,14 @@ class UCT():
             t[2][best] += res
             return res
         else:
-            self.table.add(state.board, state.placed_meeples)
+            self.table.add(state.board, state.placed_meeples, state.next_tile)
             return self.playout(state)
     
     def BestMoveUCT (self,state, n):
         for i in range (n):
             s1 = state.copy()
             res = self.expand(s1)
-        t = self.table.look(state.board, state.placed_meeples)
+        t = self.table.look(state.board, state.placed_meeples, state.next_tile)
         moves = ActionUtil.get_possible_actions(state)
         best = moves[0]
         bestValue = t[1][0]

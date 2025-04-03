@@ -38,8 +38,8 @@ class CarcassonneGame:
     def get_current_player(self) -> int:
         return self.state.current_player
 
-    def get_possible_actions(self) -> [Action]:
-        return ActionUtil.get_possible_actions(self.state)
+    def get_possible_actions(self, nb_max:int=10000) -> [Action]:
+        return ActionUtil.get_possible_actions(self.state, nb_max=nb_max)
     
     def set_state(self, state:CarcassonneGameState):
         self.state = state

@@ -10,12 +10,13 @@ from wingedsheep.carcassonne.utils.tile_position_finder import TilePositionFinde
 class ActionUtil:
 
     @staticmethod
-    def get_possible_actions(state: CarcassonneGameState):
+    def get_possible_actions(state: CarcassonneGameState, nb_max:int=10000):
         actions: [Action] = []
         if state.phase == GamePhase.TILES:
             possible_playing_positions: [PlayingPosition] = TilePositionFinder.possible_playing_positions(
                 game_state=state,
-                tile_to_play=state.next_tile
+                tile_to_play=state.next_tile,
+                nb_max=nb_max
             )
             if len(possible_playing_positions) == 0:
                 actions.append(PassAction())
