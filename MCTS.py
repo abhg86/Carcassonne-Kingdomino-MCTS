@@ -36,8 +36,9 @@ class UCT():
     def playout(self,state:CarcassonneGameState):
         state = state.copy()
         while not state.is_terminated():  
-            valid_actions: [Action] = ActionUtil.get_possible_actions(state)  
-            action: Optional[Action] = random.choice(valid_actions)  
+            valid_actions: [Action] = ActionUtil.get_possible_actions(state,nb_max=1,rdm=True)  
+            # action: Optional[Action] = random.choice(valid_actions) 
+            action = valid_actions[0] 
             if action is not None:  
                 state = StateUpdater.apply_action(game_state=state, action=action)
         if np.argmax(state.scores) == self.player:
@@ -46,7 +47,9 @@ class UCT():
 
     def expand(self,state:CarcassonneGameState):
         if state.is_terminated():
-            return state.scores
+            if np.argmax(state.scores) == self.player:
+                return 1.0
+            return 0.0
         t = self.table.look(state.board, state.placed_meeples, state.next_tile)
         if t != None:
             bestValue = 0
