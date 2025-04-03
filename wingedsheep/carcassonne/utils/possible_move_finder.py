@@ -39,8 +39,9 @@ class PossibleMoveFinder:
             possible_actions.extend(list(
                 map(lambda x: MeepleAction(meeple_type=MeepleType.NORMAL, coordinate_with_side=x), meeple_positions)))
 
-            possible_actions.extend(list(
-                map(lambda x: MeepleAction(meeple_type=MeepleType.FARMER, coordinate_with_side=x), farmer_positions)))
+            if SupplementaryRule.FARMERS in game_state.supplementary_rules:
+                possible_actions.extend(list(
+                    map(lambda x: MeepleAction(meeple_type=MeepleType.FARMER, coordinate_with_side=x), farmer_positions)))
 
         if game_state.big_meeples[current_player] > 0:
             possible_actions.extend(
@@ -56,11 +57,12 @@ class PossibleMoveFinder:
                                                          coordinate=last_played_position, side=Side.CENTER)))
 
         placed_meeple: MeeplePosition
-        for placed_meeple in game_state.placed_meeples[current_player]:
-            if placed_meeple.meeple_type == MeepleType.ABBOT:
-                possible_actions.append(
-                    MeepleAction(meeple_type=MeepleType.ABBOT, coordinate_with_side=placed_meeple.coordinate_with_side,
-                                 remove=True))
+        if SupplementaryRule.ABBOTS in game_state.supplementary_rules:
+            for placed_meeple in game_state.placed_meeples[current_player]:
+                if placed_meeple.meeple_type == MeepleType.ABBOT:
+                    possible_actions.append(
+                        MeepleAction(meeple_type=MeepleType.ABBOT, coordinate_with_side=placed_meeple.coordinate_with_side,
+                                    remove=True))
 
         return possible_actions
 

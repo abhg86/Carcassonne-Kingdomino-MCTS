@@ -19,12 +19,15 @@ class TilePositionFinder:
                 if column_tile is not None:
                     continue
 
-                for tile_turns in range(0, 4):
-                    top = game_state.get_tile(row_index - 1, column_index)
-                    bottom = game_state.get_tile(row_index + 1, column_index)
-                    left = game_state.get_tile(row_index, column_index - 1)
-                    right = game_state.get_tile(row_index, column_index + 1)
+                top = game_state.get_tile(row_index - 1, column_index)
+                bottom = game_state.get_tile(row_index + 1, column_index)
+                left = game_state.get_tile(row_index, column_index - 1)
+                right = game_state.get_tile(row_index, column_index + 1)
 
+                if top is None and right is None and bottom is None and left is None:
+                    continue
+
+                for tile_turns in range(0, 4):
                     if TileFitter.fits(tile_to_play.turn(tile_turns), top=top, bottom=bottom, left=left, right=right, game_state=game_state):
                         playing_positions.append(PlayingPosition(coordinate=Coordinate(row=row_index, column=column_index), turns=tile_turns))
 
