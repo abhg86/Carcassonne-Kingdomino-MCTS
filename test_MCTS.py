@@ -9,23 +9,27 @@ from wingedsheep.carcassonne.objects.actions.meeple_action import MeepleAction
 from wingedsheep.carcassonne.objects.actions.pass_action import PassAction  
 from wingedsheep.carcassonne.tile_sets.supplementary_rules import SupplementaryRule  
 from wingedsheep.carcassonne.tile_sets.tile_sets import TileSet  
+from MCTS import UCT
    
 game = CarcassonneGame(  
 	players=2,  
 	tile_sets=[TileSet.BASE],  
 	supplementary_rules=[]  
 )  
+
+uct = UCT(0)
   
 start = time.time()
 while not game.is_finished():  
     player: int = game.get_current_player()  
-    valid_actions: [Action] = game.get_possible_actions()  
-    action: Optional[Action] = random.choice(valid_actions)  
-    if type(action) == MeepleAction:
-        print(action.coordinate_with_side.coordinate.row, action.coordinate_with_side.coordinate.column)
+    if player==0:
+        action = uct.BestMoveUCT(game.state,2)
+    else:
+        valid_actions: [Action] = game.get_possible_actions()  
+        action: Optional[Action] = random.choice(valid_actions)
 
     if action is not None:  
         game.step(player, action)  
     game.render() 
-
+print(game.state.scores)
 print(time.time() - start)

@@ -99,17 +99,17 @@ class CarcassonneGameState:
 
         return deck
 
-    def copy(self) -> CarcassonneGameState:
+    def copy(self): 
         '''Only put basic tile set '''
         new_state =  CarcassonneGameState(
-            tile_sets=TileSet.BASE, 
+            tile_sets=[TileSet.BASE], 
             supplementary_rules=self.supplementary_rules,
             players=self.players,
             board_size=(len(self.board), len(self.board[0])),
             starting_position=self.starting_position)
 
         new_state.deck = self.deck
-        new_state.supplementary_rules: [SupplementaryRule] = self.supplementary_rules
+        new_state.supplementary_rules: [SupplementaryRule] = self.supplementary_rules 
         new_state.board: [[Tile]] = self.board
         new_state.starting_position: Coordinate = self.starting_position
         new_state.next_tile = self.next_tile
