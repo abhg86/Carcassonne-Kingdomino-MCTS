@@ -4,13 +4,24 @@ import math
 import numpy as np
 from wingedsheep.carcassonne.carcassonne_game_state import CarcassonneGameState
 from wingedsheep.carcassonne.objects.actions.action import Action
+from wingedsheep.carcassonne.objects.actions.meeple_action import MeepleAction
+from wingedsheep.carcassonne.objects.actions.pass_action import PassAction
+from wingedsheep.carcassonne.objects.actions.tile_action import TileAction
+from wingedsheep.carcassonne.objects.coordinate import Coordinate
+from wingedsheep.carcassonne.objects.coordinate_with_side import CoordinateWithSide
+from wingedsheep.carcassonne.objects.game_phase import GamePhase
+from wingedsheep.carcassonne.objects.meeple_type import MeepleType
+from wingedsheep.carcassonne.objects.side import Side
+from wingedsheep.carcassonne.objects.tile import Tile
+from wingedsheep.carcassonne.utils.action_util import ActionUtil
 
 EPS = 1e-8
+BOARD_SIZE = 35
 
 log = logging.getLogger(__name__)
 
 
-class MCTS():
+class A0_MCTS():
     """
     This class handles the MCTS tree.
     """
@@ -27,13 +38,15 @@ class MCTS():
         self.Es = {}  # stores who won (if any) for board s
         self.Vs = {}  # stores game.getValidMoves for board s
         
-        self.ActionSize = 35*35*4 +1
+        self.ActionSize = BOARD_SIZE*BOARD_SIZE*5 +1
         self.player = player
 
-    def to_string(self,state:CarcassonneGameState):
+    @staticmethod
+    def to_string(state:CarcassonneGameState):
         return (str(state.board),str(state.placed_meeples), hash(state.next_tile))
     
-    def score_to_win(self, scores:[int]):
+    @staticmethod
+    def score_to_win(scores:[int]):
         if scores==[0]*len(scores):
             return scores
         winner = np.argmax(scores)
@@ -41,23 +54,60 @@ class MCTS():
         res[winner] = 1
         return res
     
-    def getValidMoves(self, state):
-        """
-        Input:
-            state: current state
-
-        Returns:
-            validMoves: a binary vector of length self.ActionSize, 1 for
-                        moves that are valid from the current board and player,
-                        0 for invalid moves
-        """
-        self
-    
-    def action_to_number(self, action:Action):
-        if type(action)==PassAction:
+    @staticmethod
+    def side_to_number(side:Side):
+        if side == Side.CENTER:
             return 0
+        elif side == Side.TOP:
+            return 1
+        elif side == Side.RIGHT:
+            return 2
+        elif side == Side.BOTTOM:
+            return 3
+        elif side == Side.LEFT:
+            return 4
+        
+    @staticmethod
+    def number_to_side(number:int):
+        if number == 0:
+            return Side.CENTER
+        elif number == 1:
+            return Side.TOP
+        elif number == 2:
+            return Side.RIGHT
+        elif number == 3:
+            return Side.BOTTOM
+        elif number == 4:
+            return Side.LEFT
+    
+    @staticmethod
+    def action_to_number(action:Action):
+        if type(action)==PassAction:
+            return BOARD_SIZE*BOARD_SIZE*5 + 1
         elif type(action)==MeepleAction:
-            
+            row = action.coordinate_with_side.coordinate.row
+            column = action.coordinate_with_side.coordinate.column
+            side = A0_MCTS.side_to_number(action.coordinate_with_side.side)
+            return column*BOARD_SIZE*5 + row*5 + side
+        elif type(action)==TileAction:
+            row = action.coordinate.row
+            column = action.coordinate.column
+            turn = action.tile_rotations
+            return column*BOARD_SIZE*5 + row*5 + turn
+
+    @staticmethod
+    def number_to_action(number:int, phase:GamePhase, tile:Tile):
+        if number == BOARD_SIZE*BOARD_SIZE*5 + 1:
+            return PassAction
+        row = number // BOARD_SIZE*5
+        column = (number - row *BOARD_SIZE*5) // 5
+        side_or_turn = number - row*BOARD_SIZE*5 - column*5       # between 0 and 4 for meeple's sides and 0 and 3 for tile turns
+        coord = Coordinate(row, column)
+        if phase == GamePhase.MEEPLES:
+            coord_w_side = CoordinateWithSide(coord, A0_MCTS.number_to_side(side_or_turn))
+            return MeepleAction(MeepleType.NORMAL, coord_w_side)
+        elif phase == GamePhase.TILES:
+            return TileAction(tile, coord, side_or_turn)
 
 
     def getActionProb(self, state, temp=1):
@@ -72,7 +122,7 @@ class MCTS():
         for i in range(self.args.numMCTSSims):
             self.search(state)
 
-        s = self.to_string(state)
+        s = A0_MCTS.to_string(state)
         counts = [self.Nsa[(s, a)] if (s, a) in self.Nsa else 0 for a in range(self.ActionSize())]
 
         if temp == 0:
@@ -107,18 +157,18 @@ class MCTS():
             v: the negative of the value of the current canonicalBoard
         """
 
-        s = self.to_string(state)
+        s = A0_MCTS.to_string(state)
 
         if s not in self.Es:
-            self.Es[s] = self.score_to_win(state.scores)[self.player]
-        if self.Es[s] != 0:
+            self.Es[s] = A0_MCTS.score_to_win(state.scores)
+        if self.Es[s] != [0]*self.state.players:
             # terminal node
-            return -self.Es[s]
+            return self.Es[s]
 
         if s not in self.Ps:
             # leaf node
             self.Ps[s], v = self.nnet.predict(state)
-            valids = self.game.getValidMoves(canonicalBoard, 1)
+            valids = ActionUtil.getValidMovesMask(state,self.ActionSize,BOARD_SIZE)
             self.Ps[s] = self.Ps[s] * valids  # masking invalid moves
             sum_Ps_s = np.sum(self.Ps[s])
             if sum_Ps_s > 0:
@@ -134,14 +184,16 @@ class MCTS():
 
             self.Vs[s] = valids
             self.Ns[s] = 0
-            return -v
+            values = [-v]*state.players
+            values[state.current_player]=v
+            return values
 
         valids = self.Vs[s]
         cur_best = -float('inf')
         best_act = -1
 
         # pick the action with the highest upper confidence bound
-        for a in range(self.game.getActionSize()):
+        for a in range(self.ActionSize()):
             if valids[a]:
                 if (s, a) in self.Qsa:
                     u = self.Qsa[(s, a)] + self.args.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s]) / (
