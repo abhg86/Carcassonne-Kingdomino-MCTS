@@ -14,6 +14,7 @@ from wingedsheep.carcassonne.objects.meeple_type import MeepleType
 from wingedsheep.carcassonne.objects.side import Side
 from wingedsheep.carcassonne.objects.tile import Tile
 from wingedsheep.carcassonne.utils.action_util import ActionUtil
+from wingedsheep.carcassonne.utils.state_updater import StateUpdater
 
 EPS = 1e-8
 BOARD_SIZE = 35
@@ -26,10 +27,11 @@ class A0_MCTS():
     This class handles the MCTS tree.
     """
 
-    def __init__(self, game, nnet, args,player):
+    def __init__(self, game, nnet,player, numMCTSSims, cpuct):
         self.game = game
         self.nnet = nnet
-        self.args = args
+        self.numMCTSSims = numMCTSSims
+        self.cpuct = cpuct
         self.Qsa = {}  # stores Q values for s,a (as defined in the paper)
         self.Nsa = {}  # stores #times edge s,a was visited
         self.Ns = {}  # stores #times board s was visited
@@ -46,13 +48,15 @@ class A0_MCTS():
         return (str(state.board),str(state.placed_meeples), hash(state.next_tile))
     
     @staticmethod
-    def score_to_win(scores:[int]):
-        if scores==[0]*len(scores):
-            return scores
-        winner = np.argmax(scores)
-        res = [-1]*len(scores)
-        res[winner] = 1
-        return res
+    def score_to_win(scores:[int], terminated:bool):
+        # if scores==[0]*len(scores):
+        #     return scores
+        if terminated:
+            winner = np.argmax(scores)
+            res = [-1]*len(scores)
+            res[winner] = 1
+            return res
+        return [0]*len(scores)
     
     @staticmethod
     def side_to_number(side:Side):
@@ -113,13 +117,13 @@ class A0_MCTS():
     def getActionProb(self, state, temp=1):
         """
         This function performs numMCTSSims simulations of MCTS starting from
-        canonicalBoard.
+        state.
 
         Returns:
             probs: a policy vector where the probability of the ith action is
                    proportional to Nsa[(s,a)]**(1./temp)
         """
-        for i in range(self.args.numMCTSSims):
+        for i in range(self.numMCTSSims):
             self.search(state)
 
         s = A0_MCTS.to_string(state)
@@ -149,18 +153,16 @@ class A0_MCTS():
         outcome is propagated up the search path. The values of Ns, Nsa, Qsa are
         updated.
 
-        NOTE: the return values are the negative of the value of the current
-        state. This is done since v is in [-1,1] and if v is the value of a
-        state for the current player, then its value is -v for the other player.
+        NOTE: the return values are the list of value for each player, to handle any number of players
 
         Returns:
-            v: the negative of the value of the current canonicalBoard
+            v: the value of the current state
         """
 
         s = A0_MCTS.to_string(state)
 
         if s not in self.Es:
-            self.Es[s] = A0_MCTS.score_to_win(state.scores)
+            self.Es[s] = A0_MCTS.score_to_win(state.scores, state.is_terminated())
         if self.Es[s] != [0]*self.state.players:
             # terminal node
             return self.Es[s]
@@ -193,31 +195,31 @@ class A0_MCTS():
         best_act = -1
 
         # pick the action with the highest upper confidence bound
-        for a in range(self.ActionSize()):
+        for a in range(self.ActionSize):
             if valids[a]:
                 if (s, a) in self.Qsa:
-                    u = self.Qsa[(s, a)] + self.args.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s]) / (
+                    u = self.Qsa[(s, a)] + self.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s]) / (
                             1 + self.Nsa[(s, a)])
                 else:
-                    u = self.args.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s] + EPS)  # Q = 0 ?
+                    u = self.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s] + EPS)  # Q = 0 ?
 
                 if u > cur_best:
                     cur_best = u
                     best_act = a
 
         a = best_act
-        next_s, next_player = self.game.getNextState(canonicalBoard, 1, a)
-        next_s = self.game.getCanonicalForm(next_s, next_player)
+        action = A0_MCTS.number_to_action(a,state.phase, state.next_tile)
+        next_s = StateUpdater.apply_action(game_state=state, action=action)     # deep copy already made within function
 
         v = self.search(next_s)
 
         if (s, a) in self.Qsa:
-            self.Qsa[(s, a)] = (self.Nsa[(s, a)] * self.Qsa[(s, a)] + v) / (self.Nsa[(s, a)] + 1)
+            self.Qsa[(s, a)] = (self.Nsa[(s, a)] * self.Qsa[(s, a)] + v[state.current_player]) / (self.Nsa[(s, a)] + 1)
             self.Nsa[(s, a)] += 1
 
         else:
-            self.Qsa[(s, a)] = v
+            self.Qsa[(s, a)] = v[state.current_player]
             self.Nsa[(s, a)] = 1
 
         self.Ns[s] += 1
-        return -v
+        return v
