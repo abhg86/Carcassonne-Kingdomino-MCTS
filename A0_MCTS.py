@@ -15,6 +15,7 @@ from wingedsheep.carcassonne.objects.side import Side
 from wingedsheep.carcassonne.objects.tile import Tile
 from wingedsheep.carcassonne.utils.action_util import ActionUtil
 from wingedsheep.carcassonne.utils.state_updater import StateUpdater
+from MCTS_util import *
 
 EPS = 1e-8
 BOARD_SIZE = 35
@@ -27,7 +28,7 @@ class A0_MCTS():
     This class handles the MCTS tree.
     """
 
-    def __init__(self, game, nnet,player, numMCTSSims, cpuct):
+    def __init__(self, game, nnet,player, numMCTSSims, cpuct, board_size=BOARD_SIZE):
         self.game = game
         self.nnet = nnet
         self.numMCTSSims = numMCTSSims
@@ -40,78 +41,9 @@ class A0_MCTS():
         self.Es = {}  # stores who won (if any) for board s
         self.Vs = {}  # stores game.getValidMoves for board s
         
-        self.ActionSize = BOARD_SIZE*BOARD_SIZE*5 +1
+        self.ActionSize = board_size*board_size*5 +1
         self.player = player
 
-    @staticmethod
-    def to_string(state:CarcassonneGameState):
-        return (str(state.board),str(state.placed_meeples), hash(state.next_tile))
-    
-    @staticmethod
-    def score_to_win(scores:[int], terminated:bool):
-        # if scores==[0]*len(scores):
-        #     return scores
-        if terminated:
-            winner = np.argmax(scores)
-            res = [-1]*len(scores)
-            res[winner] = 1
-            return res
-        return [0]*len(scores)
-    
-    @staticmethod
-    def side_to_number(side:Side):
-        if side == Side.CENTER:
-            return 0
-        elif side == Side.TOP:
-            return 1
-        elif side == Side.RIGHT:
-            return 2
-        elif side == Side.BOTTOM:
-            return 3
-        elif side == Side.LEFT:
-            return 4
-        
-    @staticmethod
-    def number_to_side(number:int):
-        if number == 0:
-            return Side.CENTER
-        elif number == 1:
-            return Side.TOP
-        elif number == 2:
-            return Side.RIGHT
-        elif number == 3:
-            return Side.BOTTOM
-        elif number == 4:
-            return Side.LEFT
-    
-    @staticmethod
-    def action_to_number(action:Action):
-        if type(action)==PassAction:
-            return BOARD_SIZE*BOARD_SIZE*5 + 1
-        elif type(action)==MeepleAction:
-            row = action.coordinate_with_side.coordinate.row
-            column = action.coordinate_with_side.coordinate.column
-            side = A0_MCTS.side_to_number(action.coordinate_with_side.side)
-            return column*BOARD_SIZE*5 + row*5 + side
-        elif type(action)==TileAction:
-            row = action.coordinate.row
-            column = action.coordinate.column
-            turn = action.tile_rotations
-            return column*BOARD_SIZE*5 + row*5 + turn
-
-    @staticmethod
-    def number_to_action(number:int, phase:GamePhase, tile:Tile):
-        if number == BOARD_SIZE*BOARD_SIZE*5 + 1:
-            return PassAction
-        row = number // BOARD_SIZE*5
-        column = (number - row *BOARD_SIZE*5) // 5
-        side_or_turn = number - row*BOARD_SIZE*5 - column*5       # between 0 and 4 for meeple's sides and 0 and 3 for tile turns
-        coord = Coordinate(row, column)
-        if phase == GamePhase.MEEPLES:
-            coord_w_side = CoordinateWithSide(coord, A0_MCTS.number_to_side(side_or_turn))
-            return MeepleAction(MeepleType.NORMAL, coord_w_side)
-        elif phase == GamePhase.TILES:
-            return TileAction(tile, coord, side_or_turn)
 
 
     def getActionProb(self, state, temp=1):
@@ -126,7 +58,7 @@ class A0_MCTS():
         for i in range(self.numMCTSSims):
             self.search(state)
 
-        s = A0_MCTS.to_string(state)
+        s = to_hash(state)
         counts = [self.Nsa[(s, a)] if (s, a) in self.Nsa else 0 for a in range(self.ActionSize())]
 
         if temp == 0:
@@ -159,10 +91,11 @@ class A0_MCTS():
             v: the value of the current state
         """
 
-        s = A0_MCTS.to_string(state)
+        s = to_hash(state)
 
         if s not in self.Es:
             self.Es[s] = A0_MCTS.score_to_win(state.scores, state.is_terminated())
+
         if self.Es[s] != [0]*self.state.players:
             # terminal node
             return self.Es[s]
@@ -208,7 +141,7 @@ class A0_MCTS():
                     best_act = a
 
         a = best_act
-        action = A0_MCTS.number_to_action(a,state.phase, state.next_tile)
+        action = number_to_action(a,state.phase, state.next_tile)
         next_s = StateUpdater.apply_action(game_state=state, action=action)     # deep copy already made within function
 
         v = self.search(next_s)
