@@ -21,7 +21,7 @@ class CarcassonneGame:
             players=players,
             supplementary_rules=supplementary_rules
         )
-        self.visualiser = CarcassonneVisualiser()
+        # self.visualiser = CarcassonneVisualiser()
 
     def reset(self):
         self.state = CarcassonneGameState(tile_sets=self.tile_sets, supplementary_rules=self.supplementary_rules)
