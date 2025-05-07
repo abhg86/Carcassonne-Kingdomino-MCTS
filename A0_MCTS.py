@@ -1,5 +1,6 @@
 import logging
 import math
+import random
 
 import numpy as np
 from wingedsheep.carcassonne.carcassonne_game_state import CarcassonneGameState
@@ -28,8 +29,7 @@ class A0_MCTS():
     This class handles the MCTS tree.
     """
 
-    def __init__(self, game, nnet,player, numMCTSSims, cpuct, board_size=BOARD_SIZE):
-        self.game = game
+    def __init__(self, nnet, numMCTSSims, cpuct, board_size=BOARD_SIZE):
         self.nnet = nnet
         self.numMCTSSims = numMCTSSims
         self.cpuct = cpuct
@@ -41,8 +41,7 @@ class A0_MCTS():
         self.Es = {}  # stores who won (if any) for board s
         self.Vs = {}  # stores game.getValidMoves for board s
         
-        self.ActionSize = board_size*board_size*5 +1
-        self.player = player
+        self.ActionSize = board_size*board_size*9 +1
 
 
 
@@ -59,7 +58,7 @@ class A0_MCTS():
             self.search(state)
 
         s = to_hash(state)
-        counts = [self.Nsa[(s, a)] if (s, a) in self.Nsa else 0 for a in range(self.ActionSize())]
+        counts = [self.Nsa[(s, a)] if (s, a) in self.Nsa else 0 for a in range(self.ActionSize)]
 
         if temp == 0:
             bestAs = np.array(np.argwhere(counts == np.max(counts))).flatten()
@@ -94,15 +93,15 @@ class A0_MCTS():
         s = to_hash(state)
 
         if s not in self.Es:
-            self.Es[s] = A0_MCTS.score_to_win(state.scores, state.is_terminated())
+            self.Es[s] = score_to_win(state.scores, state.is_terminated())
 
-        if self.Es[s] != [0]*self.state.players:
+        if self.Es[s] != [0]*state.players:
             # terminal node
             return self.Es[s]
 
         if s not in self.Ps:
             # leaf node
-            self.Ps[s], v = self.nnet.predict(state)
+            self.Ps[s], v = self.nnet.predict(to_numpy(state))
             valids = ActionUtil.getValidMovesMask(state,self.ActionSize,BOARD_SIZE)
             self.Ps[s] = self.Ps[s] * valids  # masking invalid moves
             sum_Ps_s = np.sum(self.Ps[s])
@@ -143,6 +142,10 @@ class A0_MCTS():
         a = best_act
         action = number_to_action(a,state.phase, state.next_tile)
         next_s = StateUpdater.apply_action(game_state=state, action=action)     # deep copy already made within function
+
+        next_s.deck.append(next_s.next_tile)                                    # acquiring random new next_tile 
+        next_s.next_tile = random.choice(next_s.deck)
+        next_s.deck.remove(next_s.next_tile)
 
         v = self.search(next_s)
 

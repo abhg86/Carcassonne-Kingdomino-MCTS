@@ -1,4 +1,4 @@
-from A0_MCTS import A0_MCTS
+import MCTS_util
 from wingedsheep.carcassonne.carcassonne_game_state import CarcassonneGameState, GamePhase
 from wingedsheep.carcassonne.objects.actions.action import Action
 from wingedsheep.carcassonne.objects.actions.pass_action import PassAction
@@ -6,6 +6,7 @@ from wingedsheep.carcassonne.objects.actions.tile_action import TileAction
 from wingedsheep.carcassonne.objects.playing_position import PlayingPosition
 from wingedsheep.carcassonne.utils.possible_move_finder import PossibleMoveFinder
 from wingedsheep.carcassonne.utils.tile_position_finder import TilePositionFinder
+from MCTS_util import *
 
 
 class ActionUtil:
@@ -44,7 +45,7 @@ class ActionUtil:
         return actions
 
     @staticmethod
-    def getValidMovesMask(state:CarcassonneGameState, ActionSize:int, BOARD_SIZE:int=35, nb_max:int=10000, rdm=False):
+    def getValidMovesMask(state:CarcassonneGameState, ActionSize:int, board_size:int=35, nb_max:int=10000, rdm=False):
         """
         Input:
             state: current state
@@ -75,18 +76,18 @@ class ActionUtil:
                 for playing_position in possible_playing_positions:
                     row = playing_position.coordinate.row
                     column = playing_position.coordinate.column
-                    turn = playing_position.turns
-                    action_number = column*BOARD_SIZE*5 + row*5 + turn
+                    dx, dy = turn_to_coord(playing_position.turns)
+                    action_number =  (row*3 + dx) * board_size*3 + column*3+ dy
                     actions[action_number]=1
 
         elif state.phase == GamePhase.MEEPLES:
-            possible_meeple_positions = PossibleMoveFinder.__possible_meeple_positions(game_state=state)
+            possible_meeple_positions = PossibleMoveFinder.possible_meeple_positions(game_state=state)
             if state.meeples[state.current_player] > 0:
                 for position in possible_meeple_positions:
                     row = position.coordinate.row
                     column = position.coordinate.column
-                    side = A0_MCTS.side_to_number(position.side)
-                    number = column*BOARD_SIZE*5 + row*5 + side
+                    dx, dy = side_to_coord(position.side)
+                    number = (row*3 + dx) * board_size*3 + column*3+ dy
                     actions[number]=1
             actions[-1]=1
         return actions
