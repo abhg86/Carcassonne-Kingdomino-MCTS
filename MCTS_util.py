@@ -227,14 +227,14 @@ def score_to_win(scores:[int], terminated:bool):
     #     return scores
     if terminated:
         best_score = np.max(scores)
-        res = [-1]*len(scores)
-        winners = np.where(scores==best_score)
+        res = -1*np.ones(len(scores))
+        winners = np.argwhere(scores==best_score).flatten()
         if len(winners)==1:
             res[winners] = 1
         elif len(winners) > 1:
             # Tie
             res[winners] = 0.1
-        return res
+        return list(res)
     return [0]*len(scores)
 
 

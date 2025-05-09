@@ -68,14 +68,15 @@ class Coach():
             # sym = self.game.getSymmetries(canonicalBoard, pi)
             # for b, p in sym:
             #     trainExamples.append([b, self.curPlayer, p, None])
-            trainExamples.append((state, self.curPlayer, pi, None))
+            trainExamples.append((to_numpy(state), self.curPlayer, pi, None))
 
             action = np.random.choice(len(pi), p=pi)
-            game.step(self.curPlayer, action)
+            print(len(state.deck))
+            game.step(self.curPlayer, number_to_action(action, state.phase, state.next_tile, board_size=self.board_size))
             state = game.state
             self.curPlayer = game.get_current_player()
 
-            r = game.is_finished()
+            r = state.is_terminated()
 
             if r:
                 score = score_to_win(state.scores, r)
@@ -110,7 +111,7 @@ class Coach():
                 self.trainExamplesHistory.pop(0)
             # backup history to a file
             # NB! the examples were collected using the model from the previous iteration, so (i-1)  
-            self.saveTrainExamples(i - 1)
+            # self.saveTrainExamples(i - 1)
 
             # shuffle examples before training
             trainExamples = []
@@ -118,27 +119,31 @@ class Coach():
                 trainExamples.extend(e)
             shuffle(trainExamples)
 
-            # training new network, keeping a copy of the old one
-            self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
-            self.pnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
-            pmcts = A0_MCTS(self.pnet, self.args.numMCTSSims, self.args.cpuct,board_size=self.board_size)
+            ## FOR ARENA ##
+            # # training new network, keeping a copy of the old one
+            # self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
+            # self.pnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
+            # pmcts = A0_MCTS(self.pnet, self.args.numMCTSSims, self.args.cpuct,board_size=self.board_size)
 
+            # self.nnet.train(trainExamples)
+            # nmcts = A0_MCTS(self.nnet, self.args.numMCTSSims, self.args.cpuct,board_size=self.board_size)
+
+            # log.info('PITTING AGAINST PREVIOUS VERSION')
+            # arena = Arena(lambda x: np.argmax(pmcts.getActionProb(x, temp=0)),
+            #               lambda x: np.argmax(nmcts.getActionProb(x, temp=0)), self.game)
+            # pwins, nwins, draws = arena.playGames(self.args.arenaCompare)
+
+            # log.info('NEW/PREV WINS : %d / %d ; DRAWS : %d' % (nwins, pwins, draws))
+            # if pwins + nwins == 0 or float(nwins) / (pwins + nwins) < self.args.updateThreshold:
+            #     log.info('REJECTING NEW MODEL')
+            #     self.nnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
+            # else:
+            #     log.info('ACCEPTING NEW MODEL')
+            #     self.nnet.save_checkpoint(folder=self.args.checkpoint, filename=self.getCheckpointFile(i))
+            #     self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='best.pth.tar')
+
+            ## NORMAL ##
             self.nnet.train(trainExamples)
-            nmcts = A0_MCTS(self.nnet, self.args.numMCTSSims, self.args.cpuct,board_size=self.board_size)
-
-            log.info('PITTING AGAINST PREVIOUS VERSION')
-            arena = Arena(lambda x: np.argmax(pmcts.getActionProb(x, temp=0)),
-                          lambda x: np.argmax(nmcts.getActionProb(x, temp=0)), self.game)
-            pwins, nwins, draws = arena.playGames(self.args.arenaCompare)
-
-            log.info('NEW/PREV WINS : %d / %d ; DRAWS : %d' % (nwins, pwins, draws))
-            if pwins + nwins == 0 or float(nwins) / (pwins + nwins) < self.args.updateThreshold:
-                log.info('REJECTING NEW MODEL')
-                self.nnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
-            else:
-                log.info('ACCEPTING NEW MODEL')
-                self.nnet.save_checkpoint(folder=self.args.checkpoint, filename=self.getCheckpointFile(i))
-                self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='best.pth.tar')
 
     def getCheckpointFile(self, iteration):
         return 'checkpoint_' + str(iteration) + '.pth.tar'

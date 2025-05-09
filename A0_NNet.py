@@ -67,24 +67,24 @@ class NNetWrapper():
         """
         optimizer = optim.Adam(self.nnet.parameters())
 
-        for epoch in range(args.epochs):
+        for epoch in range(self.args.epochs):
             print('EPOCH ::: ' + str(epoch + 1))
             self.nnet.train()
             pi_losses = AverageMeter()
             v_losses = AverageMeter()
 
-            batch_count = int(len(examples) / args.batch_size)
+            batch_count = int(len(examples) / self.args.batch_size)
 
             t = tqdm(range(batch_count), desc='Training Net')
             for _ in t:
-                sample_ids = np.random.randint(len(examples), size=args.batch_size)
+                sample_ids = np.random.randint(len(examples), size=self.args.batch_size)
                 states, pis, vs = list(zip(*[examples[i] for i in sample_ids]))
                 states = torch.FloatTensor(np.array(states).astype(np.float64))
                 target_pis = torch.FloatTensor(np.array(pis))
                 target_vs = torch.FloatTensor(np.array(vs).astype(np.float64))
 
                 # predict
-                if args.cuda:
+                if self.args.cuda:
                     states, target_pis, target_vs = states.contiguous().cuda(), target_pis.contiguous().cuda(), target_vs.contiguous().cuda()
 
                 # compute output
@@ -143,7 +143,7 @@ class NNetWrapper():
         filepath = os.path.join(folder, filename)
         if not os.path.exists(filepath):
             raise ("No model in path {}".format(filepath))
-        map_location = None if args.cuda else 'cpu'
+        map_location = None if self.args.cuda else 'cpu'
         checkpoint = torch.load(filepath, map_location=map_location)
         self.nnet.load_state_dict(checkpoint['state_dict'])
 
