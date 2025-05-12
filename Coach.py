@@ -71,7 +71,6 @@ class Coach():
             trainExamples.append((to_numpy(state), self.curPlayer, pi, None))
 
             action = np.random.choice(len(pi), p=pi)
-            print(len(state.deck))
             game.step(self.curPlayer, number_to_action(action, state.phase, state.next_tile, board_size=self.board_size))
             state = game.state
             self.curPlayer = game.get_current_player()
@@ -144,6 +143,7 @@ class Coach():
 
             ## NORMAL ##
             self.nnet.train(trainExamples)
+            self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
 
     def getCheckpointFile(self, iteration):
         return 'checkpoint_' + str(iteration) + '.pth.tar'
