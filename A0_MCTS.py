@@ -44,7 +44,7 @@ class A0_MCTS():
         self.ActionSize = board_size*board_size*9 +1
 
 
-
+    @profile
     def getActionProb(self, state, temp=1):
         """
         This function performs numMCTSSims simulations of MCTS starting from
