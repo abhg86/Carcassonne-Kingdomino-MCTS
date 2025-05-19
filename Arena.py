@@ -2,7 +2,7 @@ import logging
 
 from tqdm import tqdm
 
-from MCTS_util import score_to_win
+from MCTS_util import score_to_win, action_to_number, number_to_action
 from wingedsheep.carcassonne.carcassonne_game import CarcassonneGame
 from wingedsheep.carcassonne.tile_sets.tile_sets import TileSet
 from wingedsheep.carcassonne.utils.action_util import ActionUtil
@@ -17,11 +17,10 @@ class Arena():
     An Arena class where any 2 agents can be pit against each other.
     """
 
-    def __init__(self, player1, player2, display=None):
+    def __init__(self, player1, player2, display=None, board_size=BOARD_SIZE):
         """
         Input:
             player 1,2: two functions that takes board as input, return action
-            game: Game object
             display: a function that takes board as input and prints it. Is necessary for verbose
                      mode.
 
@@ -29,6 +28,8 @@ class Arena():
         self.player1 = player1
         self.player2 = player2
         self.display = display
+        self.board_size = board_size
+        self.ActionSize = board_size * board_size * 9 + 1
 
     def playGame(self, verbose=False):
         """
@@ -40,7 +41,7 @@ class Arena():
             or
                 draw result returned from the game that is neither 1, -1, nor 0.
         """
-        players = [self.player2, None, self.player1]
+        players = [self.player1, self.player2]
         curPlayer = 0
         game = CarcassonneGame(  
             players=2,  
@@ -58,16 +59,16 @@ class Arena():
             it += 1
             if verbose:
                 assert self.display
-                print("Turn ", str(it), "Player ", str(curPlayer))
+                print("Turn ", str(it), "Player ", str(curPlayer + 1))
                 self.display(state)
             action = players[curPlayer](state)
 
             valids = ActionUtil.getValidMovesMask(state,self.ActionSize,BOARD_SIZE)
 
-            if valids[action] == 0:
+            if valids[action_to_number(action)] == 0:
                 log.error(f'Action {action} is not valid!')
                 log.debug(f'valids = {valids}')
-                assert valids[action] > 0
+                assert valids[action_to_number(action)] > 0
 
             # Notifying the opponent for the move
             # opponent = players[-curPlayer + 1]
@@ -78,7 +79,7 @@ class Arena():
             state = game.state
             curPlayer = game.get_current_player()
 
-        for player in players[0], players[2]:
+        for player in players:
             if hasattr(player, "endGame"):
                 player.endGame()
 

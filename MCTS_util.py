@@ -189,8 +189,8 @@ def to_hash(state:CarcassonneGameState):
 
 
 def action_to_number(action:Action, board_size=BOARD_SIZE):
-    if type(action)==PassAction:
-        return board_size*board_size*9 + 1
+    if action==PassAction or type(action)==PassAction:
+        return board_size*board_size*9                  # no +1 because 0,0 counted
     elif type(action)==MeepleAction:
         row = action.coordinate_with_side.coordinate.row
         column = action.coordinate_with_side.coordinate.column
@@ -201,6 +201,8 @@ def action_to_number(action:Action, board_size=BOARD_SIZE):
         column = action.coordinate.column
         dx,dy = turn_to_coord(action.tile_rotations)
         return (row*3+dx)*board_size*3 + column*3 + dy
+    else:
+        raise ValueError(f"Unknown action type: {type(action)}")
 
 
 def number_to_action(number:int, phase:GamePhase, tile:Tile, board_size=BOARD_SIZE):
