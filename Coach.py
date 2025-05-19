@@ -33,6 +33,7 @@ class Coach():
         self.trainExamplesHistory = []  # history of examples from args.numItersForTrainExamplesHistory latest iterations
         self.skipFirstSelfPlay = False  # can be overriden in loadTrainExamples()
 
+    @profile
     def executeEpisode(self):
         """
         This function executes one episode of self-play, starting with player 1.

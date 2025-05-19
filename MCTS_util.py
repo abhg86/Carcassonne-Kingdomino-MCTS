@@ -17,7 +17,7 @@ BOARD_SIZE = 35
 def to_string(state:CarcassonneGameState):
     return (str(state.board),str(state.placed_meeples), hash(state.next_tile))
 
-def side_to_coord(side:Side)->int:
+def side_to_coord(side:Side):
     if side == Side.CENTER:
         return 1,1
     elif side == Side.TOP:
@@ -56,6 +56,8 @@ def coord_to_side(dx:int, dy:int)->Side:
         return Side.BOTTOM_LEFT
     elif dx == 1 and dy == 1:
         return Side.CENTER
+    else:
+        raise ValueError(f"Unknown side: {dx},{dy}")
     
 def coord_to_turn(dx:int, dy:int)->int:
     if dx==0 and dy==1:
@@ -66,6 +68,8 @@ def coord_to_turn(dx:int, dy:int)->int:
         return 2
     elif dx==1 and dy==0:
         return 3
+    else:
+        raise ValueError(f"Unknown turn: {dx},{dy}")
 
 def turn_to_coord(turn):
     if turn == 0:
@@ -76,6 +80,8 @@ def turn_to_coord(turn):
         return 2,1
     elif turn == 3:
         return 1,0
+    else:
+        raise ValueError(f"Unknown turn: {turn}")
 
 def tile_to_numpy(tile:Tile):
     numpy_tile = np.zeros((5,3,3))
@@ -156,7 +162,7 @@ def phase_to_numpy(phase:GamePhase, board_size=BOARD_SIZE):
         numpy_phase[1,:,:] = 1
     return numpy_phase
 
-def to_numpy(state:CarcassonneGameState):
+def to_numpy(state:CarcassonneGameState)->np.ndarray:
     # 5 channels
     numpy_board = board_to_numpy(state.board)
     # 5 channel
@@ -207,7 +213,7 @@ def action_to_number(action:Action, board_size=BOARD_SIZE):
 
 def number_to_action(number:int, phase:GamePhase, tile:Tile, board_size=BOARD_SIZE):
     if number == board_size*board_size*9 :              # no +1 because 0,0 counted
-        return PassAction
+        return PassAction()
     row_dx, column_dy = number // (board_size*3), number % (board_size*3)
     row, dx = row_dx // 3, row_dx % 3
     column,dy = column_dy//3, column_dy % 3
