@@ -14,6 +14,8 @@ from MCTS_util import *
 from wingedsheep.carcassonne.carcassonne_game import CarcassonneGame
 from wingedsheep.carcassonne.tile_sets.tile_sets import TileSet
 
+from memory_profiler import profile
+
 log = logging.getLogger(__name__)
 
 BOARD_SIZE = 35
