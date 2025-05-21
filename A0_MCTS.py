@@ -54,7 +54,7 @@ class A0_MCTS():
         self.Es.clear()
         self.Vs.clear()
 
-    @profile
+    # @profile
     def getActionProb(self, state, temp=1):
         """
         This function performs numMCTSSims simulations of MCTS starting from
