@@ -42,7 +42,17 @@ class A0_MCTS():
         self.Vs = {}  # stores game.getValidMoves for board s
         
         self.ActionSize = board_size*board_size*9 +1
-
+        
+    def refresh_tree(self):
+        """
+        This function clears the MCTS tree.
+        """
+        self.Qsa.clear()
+        self.Nsa.clear()
+        self.Ns.clear()
+        self.Ps.clear()
+        self.Es.clear()
+        self.Vs.clear()
 
     @profile
     def getActionProb(self, state, temp=1):
@@ -54,6 +64,7 @@ class A0_MCTS():
             probs: a policy vector where the probability of the ith action is
                    proportional to Nsa[(s,a)]**(1./temp)
         """
+        self.refresh_tree()
         for i in range(self.numMCTSSims):
             self.search(state)
 
