@@ -69,8 +69,8 @@ class A0_MCTS():
         s = to_hash(state)
         
         for i in range(self.numMCTSSims):
-            state = copy.deepcopy(state)  # deep copy to avoid modifying the original state
-            self.search(state)
+            new_state = copy.deepcopy(state)  # deep copy to avoid modifying the original state
+            self.search(new_state)
 
         counts = [self.Nsa[(s, a)] if (s, a) in self.Nsa else 0 for a in range(self.ActionSize)]
 
