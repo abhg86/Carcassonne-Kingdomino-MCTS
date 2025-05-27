@@ -76,6 +76,8 @@ class StateUpdater:
             new_game_state: CarcassonneGameState = copy.deepcopy(game_state)
         else:
             new_game_state = game_state
+        
+        meeple_phase = game_state.phase == GamePhase.MEEPLES
 
         if isinstance(action, TileAction):
             cls.play_tile(game_state=new_game_state, tile_action=action)
@@ -89,7 +91,7 @@ class StateUpdater:
             elif game_state.phase == GamePhase.MEEPLES:
                 pass
 
-        if game_state.phase == GamePhase.MEEPLES:
+        if meeple_phase:
             cls.remove_meeples_and_update_score(game_state=new_game_state)
             cls.draw_tile(game_state=new_game_state)
             cls.next_player(game_state=new_game_state)
