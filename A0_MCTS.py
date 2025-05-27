@@ -1,3 +1,4 @@
+import copy
 import logging
 import math
 import random
@@ -66,6 +67,7 @@ class A0_MCTS():
         """
         self.refresh_tree()
         for i in range(self.numMCTSSims):
+            state = copy.deepcopy(state)  # deep copy to avoid modifying the original state
             self.search(state)
 
         s = to_hash(state)
@@ -152,7 +154,8 @@ class A0_MCTS():
 
         a = best_act
         action = number_to_action(a,state.phase, state.next_tile)
-        next_s = StateUpdater.apply_action(game_state=state, action=action)     # deep copy already made within function
+        curr_player = state.current_player
+        next_s = StateUpdater.apply_action(game_state=state, action=action, make_copy=False)     # no copy needed for search in mcts
 
         next_s.deck.append(next_s.next_tile)                                    # acquiring random new next_tile 
         next_s.next_tile = random.choice(next_s.deck)
@@ -161,11 +164,11 @@ class A0_MCTS():
         v = self.search(next_s)
 
         if (s, a) in self.Qsa:
-            self.Qsa[(s, a)] = (self.Nsa[(s, a)] * self.Qsa[(s, a)] + v[state.current_player]) / (self.Nsa[(s, a)] + 1)
+            self.Qsa[(s, a)] = (self.Nsa[(s, a)] * self.Qsa[(s, a)] + v[curr_player]) / (self.Nsa[(s, a)] + 1)
             self.Nsa[(s, a)] += 1
 
         else:
-            self.Qsa[(s, a)] = v[state.current_player]
+            self.Qsa[(s, a)] = v[curr_player]
             self.Nsa[(s, a)] = 1
 
         self.Ns[s] += 1
