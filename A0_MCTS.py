@@ -1,6 +1,7 @@
 import copy
 import logging
 import math
+import pickle
 import random
 
 import numpy as np
@@ -68,8 +69,10 @@ class A0_MCTS():
         self.refresh_tree()
         s = to_hash(state)
         
+        to_load = pickle.dumps(state)
         for i in range(self.numMCTSSims):
-            new_state = copy.deepcopy(state)  # deep copy to avoid modifying the original state
+            # new_state = copy.deepcopy(state)  # deep copy to avoid modifying the original state
+            new_state = pickle.loads(to_load)  # more efficient than deepcopy
             self.search(new_state)
 
         counts = [self.Nsa[(s, a)] if (s, a) in self.Nsa else 0 for a in range(self.ActionSize)]

@@ -1,4 +1,5 @@
 import copy
+import pickle
 
 from wingedsheep.carcassonne.carcassonne_game_state import CarcassonneGameState
 from wingedsheep.carcassonne.objects.actions.action import Action
@@ -73,7 +74,8 @@ class StateUpdater:
     @classmethod
     def apply_action(cls, game_state: CarcassonneGameState, action: Action, make_copy=True) -> CarcassonneGameState:
         if make_copy:
-            new_game_state: CarcassonneGameState = copy.deepcopy(game_state)
+            # new_game_state: CarcassonneGameState = copy.deepcopy(game_state)          less efficient than pickle
+            new_game_state: CarcassonneGameState = pickle.loads(pickle.dumps(game_state, protocol=pickle.HIGHEST_PROTOCOL))
         else:
             new_game_state = game_state
         
