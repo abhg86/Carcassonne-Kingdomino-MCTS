@@ -1,8 +1,10 @@
 import copy
+import gc
 import logging
 import math
 import pickle
 import random
+import sys
 
 import numpy as np
 from wingedsheep.carcassonne.carcassonne_game_state import CarcassonneGameState
@@ -87,6 +89,14 @@ class A0_MCTS():
         counts = [x ** (1. / temp) for x in counts]
         counts_sum = float(sum(counts))
         probs = [x / counts_sum for x in counts]
+
+
+        mem = sys.getsizeof(self.Qsa) + sys.getsizeof(self.Nsa) + sys.getsizeof(self.Ns) + sys.getsizeof(self.Ps) + sys.getsizeof(self.Es) + sys.getsizeof(self.Vs)
+        if mem > 1000000000:  # 1000 MB
+            print(f"Memory usage of MCTS tree: {mem / 1000000:.2f} MB")
+            self.refresh_tree()  # clear the tree to save memory
+            gc.collect()  # force garbage collection
+        
         return probs
 
     def search(self, state):
