@@ -74,20 +74,19 @@ class ActionUtil:
             else:
                 playing_position: PlayingPosition
                 for playing_position in possible_playing_positions:
-                    row = playing_position.coordinate.row
-                    column = playing_position.coordinate.column
-                    dx, dy = turn_to_coord(playing_position.turns)
-                    action_number =  (row*3 + dx) * board_size*3 + column*3+ dy
+                    action = TileAction(
+                        tile=state.next_tile.turn(playing_position.turns),
+                        coordinate=playing_position.coordinate,
+                        tile_rotations=playing_position.turns
+                    )
+                    action_number =  action_to_number(action, board_size=board_size)
                     actions[action_number]=1
 
         elif state.phase == GamePhase.MEEPLES:
-            possible_meeple_positions = PossibleMoveFinder.possible_meeple_positions(game_state=state)
+            possible_meeple_actions = PossibleMoveFinder.possible_meeple_actions(game_state=state)
             if state.meeples[state.current_player] > 0:
-                for position in possible_meeple_positions:
-                    row = position.coordinate.row
-                    column = position.coordinate.column
-                    dx, dy = side_to_coord(position.side)
-                    number = (row*3 + dx) * board_size*3 + column*3+ dy
+                for action in possible_meeple_actions:
+                    number = action_to_number(action, board_size=board_size)
                     actions[number]=1
             actions[-1]=1
         return actions

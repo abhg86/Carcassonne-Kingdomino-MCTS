@@ -58,9 +58,8 @@ class Arena():
         while not state.is_terminated():
             it += 1
             if verbose:
-                assert self.display
                 print("Turn ", str(it), "Player ", str(curPlayer + 1))
-                self.display(state)
+                game.render()
             action = players[curPlayer](state)
 
             valids = ActionUtil.getValidMovesMask(state,self.ActionSize,BOARD_SIZE)
@@ -84,9 +83,8 @@ class Arena():
                 player.endGame()
 
         if verbose:
-            assert self.display
             print("Game over: Turn ", str(it), "Result ", str(state.is_terminated()))
-            self.display(state)
+            game.render()
         return score_to_win(state.scores, state.is_terminated())
 
     def playGames(self, num, verbose=False):

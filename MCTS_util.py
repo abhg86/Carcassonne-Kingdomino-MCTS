@@ -188,10 +188,20 @@ def to_numpy(state:CarcassonneGameState)->np.ndarray:
 
     return res
 
-def to_hash(state:CarcassonneGameState):
-    res = to_numpy(state)
-    res = res.tobytes()
-    return res
+def to_hash(state):
+    """ 
+    Convert a CarcassonneGameState or numpy array to a hashable format.
+        :param state: CarcassonneGameState or numpy array
+        :return: A hashable representation of the state.
+    """
+    if isinstance(state, CarcassonneGameState):
+        res = to_numpy(state)
+        res = res.tobytes()
+        return res
+    elif isinstance(state, np.ndarray):
+        return state.tobytes()
+    else:
+        raise TypeError("Unsupported type for to_hash")
 
 
 def action_to_number(action:Action, board_size=BOARD_SIZE):
@@ -226,7 +236,7 @@ def number_to_action(number:int, phase:GamePhase, tile:Tile, board_size=BOARD_SI
         else:
             return MeepleAction(MeepleType.FARMER, coord_w_side)
     elif phase == GamePhase.TILES:
-        return TileAction(tile, coord, coord_to_turn(dx,dy))
+        return TileAction(tile.turn(coord_to_turn(dx,dy)), coord, coord_to_turn(dx,dy))     #needs to turn it here
 
 
 

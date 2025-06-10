@@ -69,6 +69,8 @@ class A0_MCTS():
                    proportional to Nsa[(s,a)]**(1./temp)
         """
         self.refresh_tree()
+        gc.collect()  # force garbage collection
+
         s = to_hash(state)
         
         to_load = pickle.dumps(state)
@@ -91,11 +93,6 @@ class A0_MCTS():
         probs = [x / counts_sum for x in counts]
 
 
-        mem = sys.getsizeof(self.Qsa) + sys.getsizeof(self.Nsa) + sys.getsizeof(self.Ns) + sys.getsizeof(self.Ps) + sys.getsizeof(self.Es) + sys.getsizeof(self.Vs)
-        if mem > 1000000000:  # 1000 MB
-            print(f"Memory usage of MCTS tree: {mem / 1000000:.2f} MB")
-            self.refresh_tree()  # clear the tree to save memory
-            gc.collect()  # force garbage collection
         
         return probs
 
@@ -116,8 +113,8 @@ class A0_MCTS():
         Returns:
             v: the value of the current state
         """
-
-        s = to_hash(state)
+        np_s = to_numpy(state)
+        s = to_hash(np_s)
 
         if s not in self.Es:
             self.Es[s] = score_to_win(state.scores, state.is_terminated())
@@ -128,7 +125,7 @@ class A0_MCTS():
 
         if s not in self.Ps:
             # leaf node
-            self.Ps[s], v = self.nnet.predict(to_numpy(state))
+            self.Ps[s], v = self.nnet.predict(np_s)
             valids = ActionUtil.getValidMovesMask(state,self.ActionSize,BOARD_SIZE)
             self.Ps[s] = self.Ps[s] * valids  # masking invalid moves
             sum_Ps_s = np.sum(self.Ps[s])
@@ -171,9 +168,10 @@ class A0_MCTS():
         curr_player = state.current_player
         next_s = StateUpdater.apply_action(game_state=state, action=action, make_copy=False)     # no copy needed for search in mcts
 
-        next_s.deck.append(next_s.next_tile)                                    # acquiring random new next_tile 
-        next_s.next_tile = random.choice(next_s.deck)
-        next_s.deck.remove(next_s.next_tile)
+        if next_s.phase == GamePhase.TILES:
+            next_s.deck.append(next_s.next_tile)                                    # acquiring random new next_tile 
+            next_s.next_tile = random.choice(next_s.deck)
+            next_s.deck.remove(next_s.next_tile)
 
         v = self.search(next_s)
 
