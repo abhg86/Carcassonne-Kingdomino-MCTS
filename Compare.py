@@ -1,5 +1,5 @@
 import logging 
-from multiprocessing import Pool
+from multiprocessing import Pool, set_start_method
 from random import choice
 import numpy as np
 from A0_MCTS import A0_MCTS
@@ -70,6 +70,7 @@ arena = Arena(lambda_mcts,
 # wins1, wins2, draws = arena.playGames(args.arenaCompare, verbose=False)
 
 if __name__ == "__main__":
+    set_start_method('spawn', force=True)  # Required for multiprocessing on some platforms
     with Pool(processes=1) as pool:
         res = [pool.apply_async(arena.playGames, (args.arenaCompare,)) for _ in range(1)]
         results = [r.get() for r in res]
