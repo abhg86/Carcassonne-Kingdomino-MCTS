@@ -1,4 +1,5 @@
 import logging 
+from multiprocessing import Pool
 from random import choice
 import numpy as np
 from A0_MCTS import A0_MCTS
@@ -20,7 +21,7 @@ args = dotdict({
     'tempThreshold': 15,        #
     'updateThreshold': 0.6,     # During arena playoff, new neural net will be accepted if threshold or more of games are won.
     'maxlenOfQueue': 200000,    # Number of game examples to train the neural networks.
-    'numMCTSSims': 72,          # Number of games moves for MCTS to simulate.
+    'numMCTSSims': 5,          # Number of games moves for MCTS to simulate.
     'arenaCompare': 2,         # Number of games to play during arena play to determine if new net will be accepted.
     'cpuct': 1,
 
@@ -40,16 +41,38 @@ args_net = dotdict({
     'num_channels': 1,
 })
 
-# nnet = NNetWrapper(args_net, BOARD_SIZE, player_nb=2)
-# nnet.load_checkpoint(folder=args.checkpoint, filename='temp.pth.tar')
-# mcts = A0_MCTS(nnet, args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE)
-mcts = Sc_MCTS(args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE)
+nnet = NNetWrapper(args_net, BOARD_SIZE, player_nb=2)
+nnet.load_checkpoint(folder=args.checkpoint, filename='temp.pth.tar')
+mcts = A0_MCTS(nnet, args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE)
 
+# mcts = Sc_MCTS(args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE)
+
+
+def lambda_mcts(x):
+    """
+    This function is used to convert the MCTS action probabilities to a number.
+    """
+    return number_to_action(np.argmax(mcts.getActionProb(x, temp=0)), x.phase, x.next_tile, board_size=BOARD_SIZE)
+
+def lambda_random(x):
+    """
+    This function is used to select a random action from the possible actions.
+    """
+    return choice(ActionUtil.get_possible_actions(x))
 
 # log.info('PITTING AGAINST PREVIOUS VERSION')
-arena = Arena(lambda x: number_to_action(np.argmax(mcts.getActionProb(x, temp=0, num_plays=3)), x.phase, x.next_tile, board_size=BOARD_SIZE),
-                lambda x: choice(ActionUtil.get_possible_actions(x)))
-wins1, wins2, draws = arena.playGames(args.arenaCompare)
+arena = Arena(lambda_mcts,
+              lambda_random)
 
-print(f"wins1: {wins1}, wins2: {wins2}, draws: {draws}")
+# arena = Arena(lambda x: number_to_action(np.argmax(mcts.getActionProb(x, temp=0, num_plays=3)), x.phase, x.next_tile, board_size=BOARD_SIZE),
+#                 lambda x: choice(ActionUtil.get_possible_actions(x)))
+
+# wins1, wins2, draws = arena.playGames(args.arenaCompare, verbose=False)
+
+if __name__ == "__main__":
+    with Pool(processes=1) as pool:
+        res = [pool.apply_async(arena.playGames, (args.arenaCompare,)) for _ in range(1)]
+        results = [r.get() for r in res]
+        print(results)
+# print(f"wins1: {wins1}, wins2: {wins2}, draws: {draws}")
 
