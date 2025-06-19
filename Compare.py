@@ -71,8 +71,8 @@ arena = Arena(lambda_mcts,
 
 if __name__ == "__main__":
     set_start_method('spawn', force=True)  # Required for multiprocessing on some platforms
-    with Pool(processes=1) as pool:
-        res = [pool.apply_async(arena.playGames, (args.arenaCompare,)) for _ in range(1)]
+    with Pool(processes=4) as pool:
+        res = [pool.apply_async(arena.playGames, (args.arenaCompare,)) for _ in range(10)]
         results = [r.get() for r in res]
         print(results)
 # print(f"wins1: {wins1}, wins2: {wins2}, draws: {draws}")

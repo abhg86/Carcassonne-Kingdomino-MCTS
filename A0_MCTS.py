@@ -81,21 +81,6 @@ class A0_MCTS():
 
         counts = [self.Nsa[(s, a)] if (s, a) in self.Nsa else 0 for a in range(self.ActionSize)]
 
-        if state.phase == GamePhase.MEEPLES:
-            # print([f"{i}: {counts[i]}" for i in range(len(counts)) if counts[i] > 0])
-            listt = []
-
-            for a in range(self.ActionSize):
-                if self.Vs[s][a]:
-                    if (s, a) in self.Qsa:
-                        u = self.Qsa[(s, a)] + self.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s]) / (
-                                1 + self.Nsa[(s, a)])
-                        listt.append(("in",a, u))
-                    else:
-                        u = self.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s] + EPS)  # Q = 0 ?
-                        listt.append(("out",a,u))
-            # print(listt)
-
         if temp == 0:
             bestAs = np.array(np.argwhere(counts == np.max(counts))).flatten()
             bestA = np.random.choice(bestAs)
@@ -141,15 +126,11 @@ class A0_MCTS():
         if s not in self.Ps:
             # leaf node
             self.Ps[s], v = self.nnet.predict(np_s)
-            if state.phase == GamePhase.MEEPLES:
-                self.Ps[s] = np.ones(self.ActionSize) / self.ActionSize  # uniform prior policy
             valids = ActionUtil.getValidMovesMask(state,self.ActionSize,BOARD_SIZE)
             self.Ps[s] = self.Ps[s] * valids  # masking invalid moves
             sum_Ps_s = np.sum(self.Ps[s])
             if sum_Ps_s > 0:
                 self.Ps[s] /= sum_Ps_s  # renormalize
-                # if state.phase == GamePhase.MEEPLES:
-                #     print([z for z in self.Ps[s] if z > 0])
             else:
                 # if all valid moves were masked make all valid moves equally probable
 
@@ -170,18 +151,13 @@ class A0_MCTS():
         best_act = -1
 
         # pick the action with the highest upper confidence bound
-        # print("\n\n")
         for a in range(self.ActionSize):
             if valids[a]:
                 if (s, a) in self.Qsa:
-                    # print("in")
                     u = self.Qsa[(s, a)] + self.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s]) / (
                             1 + self.Nsa[(s, a)])
                 else:
-                    # print("out")
                     u = self.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s] + EPS)  # Q = 0 ?
-                # if state.phase == GamePhase.MEEPLES:
-                #     print("u : ",u)
 
                 if u > cur_best:
                     cur_best = u

@@ -1,4 +1,5 @@
 import logging
+from multiprocessing import set_start_method
 
 import coloredlogs
 
@@ -8,17 +9,20 @@ from MCTS_util import *
 
 import torch
 
+import gc
+import tracemalloc
+
 log = logging.getLogger(__name__)
 
 coloredlogs.install(level='INFO')  # Change this to DEBUG to see more info.
 
 args = dotdict({
-    'numIters': 20,
-    'numEps': 20,              # Number of complete self-play games to simulate during a new iteration.
+    'numIters': 1,
+    'numEps': 1,              # Number of complete self-play games to simulate during a new iteration.
     'tempThreshold': 15,        #
     'updateThreshold': 0.6,     # During arena playoff, new neural net will be accepted if threshold or more of games are won.
     'maxlenOfQueue': 200000,    # Number of game examples to train the neural networks.
-    'numMCTSSims': 100,          # Number of games moves for MCTS to simulate.
+    'numMCTSSims': 2,          # Number of games moves for MCTS to simulate.
     'arenaCompare': 1,         # Number of games to play during arena play to determine if new net will be accepted.
     'cpuct': 1,
 
@@ -32,8 +36,8 @@ args = dotdict({
 args_net = dotdict({
     'lr': 0.001,
     'dropout': 0.3,
-    'epochs': 10,
-    'batch_size': 64,
+    'epochs': 2,
+    'batch_size': 2,
     'cuda': torch.cuda.is_available(),
     'num_channels': 1,
 })
@@ -64,4 +68,5 @@ def main():
 
 
 if __name__ == "__main__":
+    set_start_method('spawn', force=True)  # Required for multiprocessing on some platforms
     main()

@@ -13,10 +13,20 @@ from A0_MCTS import A0_MCTS
 from MCTS_util import *
 from wingedsheep.carcassonne.carcassonne_game import CarcassonneGame
 from wingedsheep.carcassonne.tile_sets.tile_sets import TileSet
+from pathos.multiprocessing import Pool
+import torch.multiprocessing as mp
 
 log = logging.getLogger(__name__)
 
 BOARD_SIZE = 35
+
+def execc(nnet_weights, args, q):
+    """
+    Function to execute an episode in a separate process.
+    """
+    nnet = 
+    coach = Coach(nnet, args, board_size=BOARD_SIZE)
+    q.put(coach.executeEpisode())
 
 class Coach():
     """
@@ -97,9 +107,29 @@ class Coach():
             if not self.skipFirstSelfPlay or i > 1:
                 iterationTrainExamples = deque([], maxlen=self.args.maxlenOfQueue)
 
-                for _ in tqdm(range(self.args.numEps), desc="Self Play"):
-                    self.mcts = A0_MCTS(self.nnet, self.args.numMCTSSims, self.args.cpuct, self.board_size)  # reset search tree
-                    iterationTrainExamples += self.executeEpisode()
+                q = mp.Queue()
+                processes = []
+                for _ in range(self.args.numEps):
+                    p = mp.Process(
+                        target=execc,
+                        args=(self.nnet,self.args,q,)
+                    )
+                    p.start()
+                    processes.append(p)
+                for p in processes:
+                    p.join()
+                iterationTrainExamples.extend(q.get() for _ in range(self.args.numEps))
+
+                # with Pool(processes=4) as pool:
+                #     results = pool.map(
+                #         lambda _: self.executeEpisode(),
+                #         range(self.args.numEps)
+                #     )
+                #     iterationTrainExamples.extend(results)
+                
+                # for _ in tqdm(range(self.args.numEps), desc="Self Play"):
+                #     self.mcts = A0_MCTS(self.nnet, self.args.numMCTSSims, self.args.cpuct, self.board_size)  # reset search tree
+                #     iterationTrainExamples += self.executeEpisode()
 
                 # save the iteration examples to the history 
                 self.trainExamplesHistory.append(iterationTrainExamples)
