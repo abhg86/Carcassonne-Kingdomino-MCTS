@@ -20,11 +20,10 @@ log = logging.getLogger(__name__)
 
 BOARD_SIZE = 35
 
-def execc(nnet_weights, args, q):
+def execc(nnet, args, q):
     """
     Function to execute an episode in a separate process.
     """
-    nnet = 
     coach = Coach(nnet, args, board_size=BOARD_SIZE)
     q.put(coach.executeEpisode())
 
