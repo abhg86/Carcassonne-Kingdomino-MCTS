@@ -5,6 +5,8 @@ import time
 import numpy as np
 from tqdm import tqdm
 
+from MCTS_util import dotdict
+
 # sys.path.append('../../')
 
 import argparse
@@ -34,10 +36,6 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
-
-class dotdict(dict):
-    def __getattr__(self, name):
-        return self[name]
 
 
 args_net = dotdict({
