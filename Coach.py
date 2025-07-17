@@ -174,7 +174,6 @@ class Coach():
             #     self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='best.pth.tar')
 
             ## NORMAL ##
-            print(len(trainExamples))
             self.nnet.train(trainExamples)
             self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
 
