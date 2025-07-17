@@ -108,16 +108,17 @@ class Coach():
 
                 q = mp.Queue()
                 processes = []
-                for _ in range(self.args.numEps):
+                for i in range(self.args.numEps):
+                    print(f"Process {i} is running")
                     p = mp.Process(
                         target=execc,
                         args=(self.nnet,self.args,q,)
                     )
                     p.start()
                     processes.append(p)
+                iterationTrainExamples.extend(q.get() for _ in range(self.args.numEps))
                 for p in processes:
                     p.join()
-                iterationTrainExamples.extend(q.get() for _ in range(self.args.numEps))
 
                 # with Pool(processes=4) as pool:
                 #     results = pool.map(
