@@ -116,7 +116,9 @@ class Coach():
                     )
                     p.start()
                     processes.append(p)
-                iterationTrainExamples.extend(q.get() for _ in range(self.args.numEps))
+                once_flat_list = [q.get() for _ in range(self.args.numEps)]
+                once_flat_list = [item for sublist in once_flat_list for item in sublist]
+                iterationTrainExamples += once_flat_list
                 for p in processes:
                     p.join()
 
@@ -172,6 +174,7 @@ class Coach():
             #     self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='best.pth.tar')
 
             ## NORMAL ##
+            print(len(trainExamples))
             self.nnet.train(trainExamples)
             self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
 
