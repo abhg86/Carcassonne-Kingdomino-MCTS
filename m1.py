@@ -58,7 +58,7 @@ def f2():
     for i in range(2):
         print(f"Process {i} is running")
         p = mp.Process(target=execc, args=(Coach(A0_NNet(args_net), args),q,))
-        p.daemon = True
+        # p.daemon = True
         p.start()
         processes.append(p)
     res = [q.get() for _ in range(2)]
