@@ -109,7 +109,7 @@ class Coach():
                 q = mp.Queue()
                 processes = []
                 for i in range(self.args.numEps):
-                    print(f"Process {i} is running")
+                    # print(f"Process {i} is running")
                     p = mp.Process(
                         target=execc,
                         args=(self.nnet,self.args,q,)
