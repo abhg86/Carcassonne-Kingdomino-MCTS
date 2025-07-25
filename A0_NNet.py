@@ -59,7 +59,7 @@ class NNetWrapper():
         if args.cuda:
             self.nnet.cuda()
 
-    def train(self, examples):
+    def train(self, examples,nb_train=144, numEps=64):
         """
         examples: list of examples, each example is of form (state, pi, v)
         """
@@ -71,6 +71,7 @@ class NNetWrapper():
             pi_losses = AverageMeter()
             v_losses = AverageMeter()
 
+            # batch_count = int(nb_train * numEps / self.args.batch_size)
             batch_count = int(len(examples) / self.args.batch_size)
 
             t = tqdm(range(batch_count), desc='Training Net')

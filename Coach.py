@@ -116,9 +116,9 @@ class Coach():
                     )
                     p.start()
                     processes.append(p)
-                once_flat_list = [q.get() for _ in range(self.args.numEps)]
-                once_flat_list = [item for sublist in once_flat_list for item in sublist]
-                iterationTrainExamples += once_flat_list
+                one_flat_list = [q.get() for _ in range(self.args.numEps)]
+                one_flat_list = [item for sublist in one_flat_list for item in sublist]
+                iterationTrainExamples += one_flat_list
                 for p in processes:
                     p.join()
 
