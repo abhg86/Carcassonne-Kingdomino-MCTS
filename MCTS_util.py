@@ -154,10 +154,15 @@ def player_to_numpy(current_player:int, player_nb:int, board_size=BOARD_SIZE):
     numpy_player[current_player,:,:]
     return numpy_player
 
-def phase_to_numpy(phase:GamePhase, board_size=BOARD_SIZE):
+def phase_to_numpy(state:CarcassonneGameState, board_size=BOARD_SIZE):
+    phase = state.phase
     numpy_phase = np.zeros((2,board_size*3, board_size*3))
     if phase == GamePhase.MEEPLES:
         numpy_phase[0,:,:] = 1
+        # Add coords of last tile put on the board
+        coord = state.last_tile_action.coordinate
+        if coord is not None:
+            numpy_phase[1,coord.row*3:coord.row*3+3, coord.column*3:coord.column*3+3] = 1 
     elif phase == GamePhase.TILES:
         numpy_phase[1,:,:] = 1
     return numpy_phase
