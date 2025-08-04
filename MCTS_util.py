@@ -160,8 +160,8 @@ def phase_to_numpy(state:CarcassonneGameState, board_size=BOARD_SIZE):
     if phase == GamePhase.MEEPLES:
         numpy_phase[0,:,:] = 1
         # Add coords of last tile put on the board
-        coord = state.last_tile_action.coordinate
-        if coord is not None:
+        if state.last_tile_action is not None:
+            coord = state.last_tile_action.coordinate
             numpy_phase[1,coord.row*3:coord.row*3+3, coord.column*3:coord.column*3+3] = 1 
     elif phase == GamePhase.TILES:
         numpy_phase[1,:,:] = 1
