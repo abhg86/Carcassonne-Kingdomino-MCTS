@@ -186,7 +186,7 @@ def to_numpy(state:CarcassonneGameState)->np.ndarray:
     res = np.append(res, numpy_player,0)
 
     # 2 channels
-    numpy_phase = phase_to_numpy(state.phase)
+    numpy_phase = phase_to_numpy(state)
 
     # 12 + nb of players * 5 channels
     res = np.append(res,numpy_phase,0)
