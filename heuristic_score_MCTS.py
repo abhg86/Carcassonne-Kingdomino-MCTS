@@ -29,9 +29,10 @@ class Sc_MCTS():
     This class handles the MCTS tree.
     """
 
-    def __init__(self, numMCTSSims, cpuct, board_size=BOARD_SIZE):
+    def __init__(self, numMCTSSims, cpuct, board_size=BOARD_SIZE, numplays=10):
         self.numMCTSSims = numMCTSSims
         self.cpuct = cpuct
+        self.numplays = numplays          # number of plays for heuristic playout
         self.Wsa = {}  # stores number of wins for s,a
         self.Nsa = {}  # stores #times edge s,a was visited
         self.Ns = {}  # stores #times board s was visited
@@ -49,13 +50,13 @@ class Sc_MCTS():
         self.Ns.clear()
         self.Vs.clear()
 
-    def heuristic_playout(self, state:CarcassonneGameState, num_plays:int=10):
+    def heuristic_playout(self, state:CarcassonneGameState):
         """
         This function performs a playout for num_plays iterations.
         It returns the win score of the player in the state it ends up in.
         """
         state = state.copy()
-        for _ in range(num_plays):
+        for _ in range(self.numplays):
             if state.is_terminated():
                 break
             valid_actions: [Action] = ActionUtil.get_possible_actions(state,nb_max=1,rdm=True)  
@@ -126,7 +127,7 @@ class Sc_MCTS():
             # leaf node
             self.Ns[s] = 0
             self.Vs[s] = ActionUtil.getValidMovesMask(state,self.ActionSize,BOARD_SIZE)  # get the valid moves
-            return self.heuristic_playout(state, num_plays=10)
+            return self.heuristic_playout(state)
 
         valids = self.Vs[s]
         cur_best = -float('inf')
