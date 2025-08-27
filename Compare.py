@@ -44,7 +44,7 @@ args_net = dotdict({
 # nnet = NNetWrapper(args_net, BOARD_SIZE, player_nb=2)
 # nnet.load_checkpoint(folder=args.checkpoint, filename='temp.pth.tar')
 # mcts = A0_MCTS(nnet, args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE)
-mcts = Sc_MCTS(args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE, numplays=10)
+mcts = Sc_MCTS(args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE, numplays=5)
 
 mcts2 = Sc_MCTS(args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE, numplays=3)
 
