@@ -3,6 +3,7 @@ from multiprocessing import Pool, set_start_method
 from random import choice
 import numpy as np
 from A0_MCTS import A0_MCTS
+from MCTS import UCT
 from heuristic_score_MCTS import Sc_MCTS
 import torch
 
@@ -48,8 +49,15 @@ mcts = Sc_MCTS(args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE, numplays=3)
 
 mcts2 = Sc_MCTS(args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE, numplays=5)
 
+uct = UCT(0)
+
 # mcts = Sc_MCTS(args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE)
 
+def lambda_uct(x):
+    """
+    This function is used to convert the UCT action probabilities to a number.
+    """
+    return uct.BestMoveUCT(x,args.numMCTSSims)
 
 def lambda_mcts(x):
     """
@@ -70,8 +78,8 @@ def lambda_random(x):
     return choice(ActionUtil.get_possible_actions(x))
 
 # log.info('PITTING AGAINST PREVIOUS VERSION')
-arena = Arena(lambda_mcts,
-              lambda_random)
+arena = Arena(lambda_uct,
+              lambda_mcts)
 
 # arena = Arena(lambda x: number_to_action(np.argmax(mcts.getActionProb(x, temp=0)), x.phase, x.next_tile, board_size=BOARD_SIZE),
 #                 lambda x: choice(ActionUtil.get_possible_actions(x)))
