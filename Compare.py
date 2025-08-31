@@ -45,7 +45,7 @@ args_net = dotdict({
 # nnet = NNetWrapper(args_net, BOARD_SIZE, player_nb=2)
 # nnet.load_checkpoint(folder=args.checkpoint, filename='temp.pth.tar')
 # mcts = A0_MCTS(nnet, args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE)
-mcts = Sc_MCTS(args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE, numplays=3)
+mcts = Sc_MCTS(args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE, numplays=5)
 
 mcts2 = Sc_MCTS(args.numMCTSSims, args.cpuct,board_size=BOARD_SIZE, numplays=5)
 
@@ -78,7 +78,7 @@ def lambda_random(x):
     return choice(ActionUtil.get_possible_actions(x))
 
 # log.info('PITTING AGAINST PREVIOUS VERSION')
-arena = Arena(lambda_uct,
+arena = Arena(lambda_random,
               lambda_mcts)
 
 # arena = Arena(lambda x: number_to_action(np.argmax(mcts.getActionProb(x, temp=0)), x.phase, x.next_tile, board_size=BOARD_SIZE),
